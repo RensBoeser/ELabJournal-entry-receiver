@@ -2,7 +2,7 @@ import requests, json, re, csv, time
 
 def __main__(libpath):
 	# get token using login details from eLabJournal stored in a json
-	token = APIKEY( json.loads( open('{0}\\secrets.json'.format(libpath)).read() ) )
+	token = APIKEY( json.loads( open('{0}\\eLabAPICredentials.json'.format(libpath)).read() ) )
 	
 	# download entries
 	entries = getSections(token, 'entry')
@@ -32,26 +32,13 @@ def request(API_key, url, data=None):
 	return response.json()
 
 def date_converter(date):
-	# change [yyyy-mm-dd] to [MONTH dd]
+	# change [yyyy-mm-dd] to [dd-mm-yyyy]
 	date  = date.split('-')
-	monthNames = {"01": "Januari",
-								"02": "Febuari",
-								"03": "March",
-								"04": "April",
-								"05": "May",
-								"06": "June",
-								"07": "July",
-								"08": "August",
-								"09": "September",
-								"10": "October",
-								"11": "November",
-								"12": "December"
-							}
-
 	day   = date[2]
-	month = monthNames.get(date[1])
+	month = date[1]
+	year  = date[0]
 
-	return month + ' ' + day
+	return "{0}-{1}-{2}".format(day, month, year)
 
 def getSections(token, identifier, type="paragraph"):
 	if   type == "paragraph":
@@ -139,4 +126,5 @@ def writeCSV(entries, outFolder, outFile="wetlab-entries"):
 		print("incompatible value for 'entries'")
 
 if __name__ == '__main__':
-	__main__()
+	libpath = '..\\lib'
+	__main__(libpath)
