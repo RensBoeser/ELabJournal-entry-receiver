@@ -1,6 +1,6 @@
 import requests, json, re, csv, time
 
-def __main__(libpath):
+def GetELabEntries(libpath):
 	# get token using login details from eLabJournal stored in a json
 	token = APIKEY( json.loads( open('{0}\\eLabAPICredentials.json'.format(libpath)).read() ) )
 	
@@ -8,7 +8,7 @@ def __main__(libpath):
 	entries = getSections(token, 'entry')
 
 	# generate json file containing entries
-	writeJSON(entries, libpath)
+	return writeJSON(entries, libpath)
 	
 	# generate csv file containing entries
 	# writeCSV(entries)
@@ -90,14 +90,13 @@ def getParagraphSections(token, identifier):
 
 def writeJSON(entries, outFolder, outFile="wetlab-entries"):
 	if type(entries) == list:
-		with open(outFolder + '\\' + outFile + '.json', 'w') as f:
-			f.write('{\n')
-			f.write('\t"entries": [\n\t\t')
-			for i in range(len(entries)):
-				json.dump(entries[i], f)
-				if not i == len(entries)-1:
-					f.write(',\n\t\t')
-			f.write('\n\t]\n}')
+		output = '{\n\t"entries": [\n\t\t'
+		for i in range(len(entries)):
+			output += json.dumps(entries[i])
+			if not i == len(entries)-1:
+				output += ',\n\t\t'
+		output += '\n\t]\n}'
+		return output
 	else:
 		print("incompatible value for 'entries'")
 	
@@ -126,5 +125,7 @@ def writeCSV(entries, outFolder, outFile="wetlab-entries"):
 		print("incompatible value for 'entries'")
 
 if __name__ == '__main__':
-	libpath = '..\\lib'
-	__main__(libpath)
+	libpath = '../iGEM-RotterdamHR-2018/lib'
+	data = GetELabEntries(libpath)
+	print(data)
+	print(json.loads(data))
