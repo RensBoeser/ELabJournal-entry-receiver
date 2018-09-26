@@ -8,7 +8,7 @@ def GetELabEntries(libpath):
 	entries = getSections(token, 'entry')
 
 	# generate json file containing entries
-	return writeJSON(entries, libpath)
+	return writeJSON(entries)
 	
 	# generate csv file containing entries
 	# writeCSV(entries)
@@ -88,7 +88,7 @@ def getParagraphSections(token, identifier):
 
 	return entries
 
-def writeJSON(entries, outFolder, outFile="wetlab-entries"):
+def writeJSON(entries):
 	if type(entries) == list:
 		output = '{\n\t"entries": [\n\t\t'
 		for i in range(len(entries)):
@@ -127,5 +127,3 @@ def writeCSV(entries, outFolder, outFile="wetlab-entries"):
 if __name__ == '__main__':
 	libpath = '../iGEM-RotterdamHR-2018/lib'
 	data = GetELabEntries(libpath)
-	print(data)
-	print(json.loads(data))
