@@ -65,7 +65,10 @@ def getParagraphSections(token, identifier):
 			# get all sections that have a title containing the identifier
 			if identifier in section['sectionHeader']:
 				content_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections/{1}/content'.format(experimentID, section['expJournalID'])
+				# -*- coding: utf-8 -*-
 				content = request(token, content_url)['contents']
+				
+
 				# generate entry in dictionary form
 				entry = dict(
 					title=experiment['name'],
