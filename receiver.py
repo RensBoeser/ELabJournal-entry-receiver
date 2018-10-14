@@ -41,7 +41,7 @@ def date_converter(date):
 	return "{0}-{1}-{2}".format(day, month, year)
 
 def getSections(token, identifier, type="paragraph"):
-	if   type == "paragraph":
+	if type == "paragraph":
 		return getParagraphSections(token, identifier)
 	else:
 		print("type '{0}' not yet compatible".format(type))
@@ -56,30 +56,35 @@ def getParagraphSections(token, identifier):
 	experiments = request(token, 'https://www.elabjournal.com/api/v1/experiments')['data']
 	for experiment in experiments:
 		experimentID = experiment['experimentID']
-		# print(str(experimentID) + ' | ' + experiment['name'])
 
 		# get all sections within every experiment
 		sections_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections'.format(experimentID)
 		sections = request(token, sections_url)['data']
+		# get all sections that have a title containing the identifier
+		sections = list(filter(lambda s: identifier in s['sectionHeader'], sections))
+		count = 1
+		sectionLength = len(sections)
 		for section in sections:
-			# get all sections that have a title containing the identifier
-			if identifier in section['sectionHeader']:
-				content_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections/{1}/content'.format(experimentID, section['expJournalID'])
-				# -*- coding: utf-8 -*-
-				content = request(token, content_url)['contents']
-				
-
+			print('[{0}/{1}] {2}'.format(str(count).zfill(2), str(sectionLength).zfill(2), experiment['name']), end="\r")
+			content_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections/{1}/content'.format(experimentID, section['expJournalID'])
+			# -*- coding: utf-8 -*-
+			content = request(token, content_url)['contents']
 				# generate entry in dictionary form
-				entry = dict(
-					title=experiment['name'],
-					date=section['sectionDate'].split('T')[0], # remove the timestamp
-					attendees="UNKNOWN", # TODO: find out how to get attendees from the API
-					description=content,
-					category="wetlab",
-					experimentday=re.search(r'\d+', section['sectionHeader']).group()
-				)
-				entries.append(entry)
-				# print("- " + str(section['expJournalID']) + " | " + entry['title'] + " " + entry['experimentday'] + " (" + entry['date'] + ")") #FOR DEBUGGING#
+			entry = dict(
+				title=experiment['name'],
+				date=section['sectionDate'].split('T')[0], # remove the timestamp
+				attendees="UNKNOWN", # TODO: find out how to get attendees from the API
+				description=content,
+				category="wetlab",
+				experimentday=re.search(r'\d+', section['sectionHeader']).group()
+			)
+			entries.append(entry)
+			# print("- " + str(section['expJournalID']) + " | " + entry['title'] + " " + entry['experimentday'] + " (" + entry['date'] + ")") #FOR DEBUGGING#
+			count = count + 1
+		if sectionLength:
+			print('')
+		else:
+			print('[00/00] {0}'.format(experiment['name']))
 	
 	# document downloadtime
 	end = time.time()
