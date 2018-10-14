@@ -1,11 +1,11 @@
 import requests, json, re, csv, time
 
-def GetELabEntries(libpath):
+def GetELabEntries(libpath, identifier='entry'):
 	# get token using login details from eLabJournal stored in a json
 	token = APIKEY( json.loads( open('{0}\\eLabAPICredentials.json'.format(libpath)).read() ) )
 	
 	# download entries
-	entries = getSections(token, 'entry')
+	entries = getSections(token, identifier)
 
 	# generate json file containing entries
 	return writeJSON(entries)
@@ -69,18 +69,21 @@ def getParagraphSections(token, identifier):
 			content_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections/{1}/content'.format(experimentID, section['expJournalID'])
 			# -*- coding: utf-8 -*-
 			content = request(token, content_url)['contents']
+
+			if content != "<p></p>":
 				# generate entry in dictionary form
-			entry = dict(
-				title=experiment['name'],
-				date=section['sectionDate'].split('T')[0], # remove the timestamp
-				attendees="UNKNOWN", # TODO: find out how to get attendees from the API
-				description=content,
-				category="wetlab",
-				experimentday=re.search(r'\d+', section['sectionHeader']).group()
-			)
-			entries.append(entry)
-			# print("- " + str(section['expJournalID']) + " | " + entry['title'] + " " + entry['experimentday'] + " (" + entry['date'] + ")") #FOR DEBUGGING#
+				entry = dict(
+					title=experiment['name'],
+					date=section['sectionDate'].split('T')[0], # remove the timestamp
+					attendees="UNKNOWN", # TODO: find out how to get attendees from the API
+					description=content,
+					category="wetlab",
+					experimentday=re.search(r'\d+', section['sectionHeader']).group().zfill(2)
+				)
+				entries.append(entry)
+				# print("- " + str(section['expJournalID']) + " | " + entry['title'] + " " + entry['experimentday'] + " (" + entry['date'] + ")") #FOR DEBUGGING#
 			count = count + 1
+
 		if sectionLength:
 			print('')
 		else:
