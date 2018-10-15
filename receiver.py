@@ -42,14 +42,19 @@ def date_converter(date):
 
 def getSections(token, identifier, type="paragraph"):
 	if type == "paragraph":
-		return getParagraphSections(token, identifier)
+		print('downloading eLabJournal sections...')
+		start = time.time()
+
+		paragraphs = getParagraphSections(token, identifier)
+
+		end = time.time()
+		print('downloaded eLabJournal sections [{0}ms]'.format(int((end-start) * 1000)))
+		return paragraphs
 	else:
 		print("type '{0}' not yet compatible".format(type))
 	
 
 def getParagraphSections(token, identifier):
-	print('downloading notebook entries...')
-	start = time.time()
 
 	# get all experiments (where the user is a contributor of)
 	entries = list()
@@ -61,7 +66,7 @@ def getParagraphSections(token, identifier):
 		sections_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections'.format(experimentID)
 		sections = request(token, sections_url)['data']
 		# get all sections that have a title containing the identifier
-		sections = list(filter(lambda s: identifier in s['sectionHeader'], sections))
+		sections = list(filter(lambda s: identifier.lower() in s['sectionHeader'].lower() and s['sectionType'] == "PARAGRAPH", sections))
 		count = 1
 		sectionLength = len(sections)
 		for section in sections:
@@ -69,8 +74,9 @@ def getParagraphSections(token, identifier):
 			content_url = 'https://www.elabjournal.com/api/v1/experiments/{0}/sections/{1}/content'.format(experimentID, section['expJournalID'])
 			# -*- coding: utf-8 -*-
 			content = request(token, content_url)['contents']
+			sectionID = re.search(r'\d+', section['sectionHeader']).group().zfill(2) if re.search(r'\d+', section['sectionHeader']) else 'none'
 
-			if content != "<p></p>":
+			if content != "<p></p>" and sectionID != 'none': # if there is content and a sectionID is provided
 				# generate entry in dictionary form
 				entry = dict(
 					title=experiment['name'],
@@ -78,7 +84,7 @@ def getParagraphSections(token, identifier):
 					attendees="UNKNOWN", # TODO: find out how to get attendees from the API
 					description=content,
 					category="wetlab",
-					experimentday=re.search(r'\d+', section['sectionHeader']).group().zfill(2)
+					experimentday=sectionID
 				)
 				entries.append(entry)
 				# print("- " + str(section['expJournalID']) + " | " + entry['title'] + " " + entry['experimentday'] + " (" + entry['date'] + ")") #FOR DEBUGGING#
@@ -88,10 +94,6 @@ def getParagraphSections(token, identifier):
 			print('')
 		else:
 			print('[00/00] {0}'.format(experiment['name']))
-	
-	# document downloadtime
-	end = time.time()
-	print('downloaded notebook entries [{0}ms]'.format(int((end-start) * 1000)))
 	
 	# sort entries and formulate monthnames
 	entries = sorted(entries, key=lambda k: k['date'])
